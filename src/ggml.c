@@ -30,18 +30,43 @@
 
 #include <windows.h>
 
-typedef volatile LONG atomic_int;
+///////////////////////////////////////////////////////////////////
+// Atomic operations are operations that are indivisible and cannot be interrupted, 
+// ensuring consistency and synchronization in multithreaded programs.
+// 
+// The volatile keyword is used to indicate that reads and writes to this type must be 
+// performed atomically, which means that other threads cannot modify the value at the 
+// same time. This is important for operations that require synchronization, such as 
+// updating a shared counter.
+//////////////////////////////////////////////////////////////////
+
+// Creating an atomic_int data type, that can only be accessed atomically
+typedef volatile LONG atomic_int;   
+// Creating atomic_bool data type, which is under the hood an atomic_int type
 typedef atomic_int atomic_bool;
 
+///////////////////////////////////////////////////////////////////
+// Interlocked operations are a type of atomic operation that can be performed on shared 
+// memory locations in multithreaded programs to ensure that the operation is performed 
+// atomically and thread-safe. 
+///////////////////////////////////////////////////////////////////
+
+// Stores the value val(Of Long type) into the address pointed by pointer ptr in an atomic way
 static void atomic_store(atomic_int* ptr, LONG val) {
     InterlockedExchange(ptr, val);
 }
+
+// Reads and returns the value stored at pointer ptr, in an atomic way
 static LONG atomic_load(atomic_int* ptr) {
     return InterlockedCompareExchange(ptr, 0, 0);
 }
+
+// Increments the value stored pointer ptr by inc in an atomic way
 static LONG atomic_fetch_add(atomic_int* ptr, LONG inc) {
     return InterlockedExchangeAdd(ptr, inc);
 }
+
+// Decrements the value stored pointer ptr by inc in an atomic way
 static LONG atomic_fetch_sub(atomic_int* ptr, LONG dec) {
     return atomic_fetch_add(ptr, -(dec));
 }
