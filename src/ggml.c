@@ -71,9 +71,17 @@ static LONG atomic_fetch_sub(atomic_int* ptr, LONG dec) {
     return atomic_fetch_add(ptr, -(dec));
 }
 
+// The HANDLE type is typically used in Windows programming to refer to resources that are 
+// managed by the operating system, such as files and system objects. The actual value of 
+// a HANDLE is opaque, meaning that it is not meant to be interpreted by application code 
+// and should only be used with system functions that are designed to operate on handles.
 typedef HANDLE pthread_t;
 
+// DWORD is defined as an alias for the unsigned long type, which means that DWORD and unsigned 
+// long can be used interchangeably in Windows programming.
 typedef DWORD thread_ret_t;
+
+// This is a function that creates a new thread using the Windows API and wraps it in a way that is compatible with the POSIX threads API.
 static int pthread_create(pthread_t* out, void* unused, thread_ret_t(*func)(void*), void* arg) {
     (void) unused;
     HANDLE handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, arg, 0, NULL);
@@ -86,11 +94,13 @@ static int pthread_create(pthread_t* out, void* unused, thread_ret_t(*func)(void
     return 0;
 }
 
+// This is a function called pthread_join, which waits for the specified thread to terminate and returns its exit code.
 static int pthread_join(pthread_t thread, void* unused) {
     (void) unused;
     return (int) WaitForSingleObject(thread, INFINITE);
 }
 
+// This is a function called sched_yield, which is used to give up the CPU voluntarily to other threads.
 static int sched_yield (void) {
     Sleep (0);
     return 0;
@@ -221,6 +231,9 @@ typedef double ggml_float;
 #define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)
 #define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
 
+// The function uses inline assembly code (denoted by the __asm__ keyword) 
+// to perform low-level operations on the input value in order to convert it 
+// to a 32-bit floating-point value. 
 static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     register float f;
     register double d;
@@ -234,6 +247,9 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     return f;
 }
 
+// The function uses inline assembly code (denoted by the __asm__ keyword) 
+// to perform low-level operations on the input value in order to convert it 
+// to a 16-bit floating-point value (also known as a "half-precision" float). 
 static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
     register double d;
     register ggml_fp16_t r;
@@ -251,6 +267,9 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
 // FP16 <-> FP32
 // ref: https://github.com/Maratyszcza/FP16
 
+// This is a function that takes an unsigned 32-bit integer w as input, 
+// interprets it as the bit pattern of a 32-bit floating-point number, 
+// and returns the corresponding floating-point value.
 static inline float fp32_from_bits(uint32_t w) {
     union {
         uint32_t as_bits;
@@ -260,6 +279,9 @@ static inline float fp32_from_bits(uint32_t w) {
     return fp32.as_value;
 }
 
+// This is a function that takes a single-precision (32-bit) floating-point value f as input, 
+// interprets its bit pattern as a 32-bit unsigned integer, 
+// and returns that integer.
 static inline uint32_t fp32_to_bits(float f) {
     union {
         float as_value;
@@ -269,6 +291,9 @@ static inline uint32_t fp32_to_bits(float f) {
     return fp32.as_bits;
 }
 
+// The above code is a function that takes a 16-bit floating-point value (ggml_fp16_t) as input 
+// and returns its equivalent 32-bit floating-point value. 
+// It does so by performing various bit manipulations and transformations on the input value.
 static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     const uint32_t w = (uint32_t) h << 16;
     const uint32_t sign = w & UINT32_C(0x80000000);
@@ -292,6 +317,9 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     return fp32_from_bits(result);
 }
 
+// This is a function to convert a single-precision floating-point number (float) 
+// to a half-precision floating-point number (ggml_fp16_t). 
+// The function is implemented using inline assembly to optimize performance.
 static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)
     const float scale_to_inf = 0x1.0p+112f;
